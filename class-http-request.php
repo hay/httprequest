@@ -57,13 +57,7 @@ class HttpRequest {
     );
 
     function __construct($method, $url, $data = false, $args = false) {
-        $method = strtolower($method);
-        if ($method == "post" || $method == "get") {
-            $this->method = $method;
-        } else {
-            $this->setError("Invalid method: $method");
-            return;
-        }
+        $method = strtoupper($method);
 
         $this->url  = $url;
         $this->data = $data;
@@ -138,11 +132,23 @@ class HttpRequest {
             curl_setopt($c, CURLOPT_USERPWD, $this->args['username'] . ':' . $this->args['password']);
         }
 
-        // POST
-        if($this->method == "post") {
-            curl_setopt($c, CURLOPT_POST, true);
-            // Always escape HTTP data dammit!
-            curl_setopt($c, CURLOPT_POSTFIELDS, http_build_query($this->data));
+	switch($this->method) 
+	{
+		// POST
+		case 'POST':
+	    	curl_setopt($c, CURLOPT_POST, true);
+	    	// Always escape HTTP data dammit!
+	    	curl_setopt($c, CURLOPT_POSTFIELDS, http_build_query($this->data));
+		break;
+		
+		case 'GET':
+		break;
+		
+		default:
+		curl_setopt($c, CURLOPT_CUSTOMREQUEST, $this->method);
+		if(!empty($this->data))
+		curl_setopt($c, CURLOPT_POSTFIELDS, http_build_query($this->data));
+		break;
         }
 
         // Many servers require this to output decent HTML
